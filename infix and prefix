@@ -1,0 +1,101 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX 100
+
+char stack[MAX];
+int top = -1;
+
+void push(char c) {
+    if (top < MAX - 1) {
+        stack[++top] = c;
+    }
+}
+
+char pop() {
+    if (top != -1) {
+        return stack[top--];
+    }
+    return '\0';
+}
+
+int precedence(char c) {
+    switch (c) {
+        case '+':
+        case '-':
+            return 1;
+        case '*':
+        case '/':
+            return 2;
+        case '^':
+            return 3;
+        default:
+            return 0;
+    }
+}
+
+void infixToPrefix(char* infix, char* prefix) {
+    int i, j = 0;
+    int length = strlen(infix);
+    char* reversedInfix = (char*)malloc(length + 1);
+    
+    for (i = 0; i < length; i++) {
+        reversedInfix[i] = infix[length - 1 - i];
+    }
+    reversedInfix[length] = '\0';
+
+    for (i = 0; i < length; i++) {
+        if (reversedInfix[i] == ')') {
+            reversedInfix[i] = '(';
+        } else if (reversedInfix[i] == '(') {
+            reversedInfix[i] = ')';
+        }
+    }
+
+    for (i = 0; i < length; i++) {
+        if (isalnum(reversedInfix[i])) {
+            prefix[j++] = reversedInfix[i];
+        } else if (reversedInfix[i] == '(') {
+            push(reversedInfix[i]);
+        } else if (reversedInfix[i] == ')') {
+            while (top != -1 && stack[top] != '(') {
+                prefix[j++] = pop();
+            }
+            pop();
+        } else {
+            while (top != -1 && precedence(stack[top]) >= precedence(reversedInfix[i])) {
+                prefix[j++] = pop();
+            }
+            push(reversedInfix[i]);
+        }
+    }
+
+    while (top != -1) {
+        prefix[j++] = pop();
+    }
+
+    prefix[j] = '\0';
+    free(reversedInfix);
+    
+    // Reverse the prefix expression
+    for (i = 0; i < j / 2; i++) {
+        char temp = prefix[i];
+        prefix[i] = prefix[j - i - 1];
+        prefix[j - i - 1] = temp;
+    }
+}
+
+int main() {
+    char infix[MAX], prefix[MAX];
+    
+    printf("Enter infix expression: ");
+    scanf("%s", infix);
+    
+    infixToPrefix(infix, prefix);
+    
+    printf("Prefix expression: %s\n", prefix);
+    
+    return 0;
+}
